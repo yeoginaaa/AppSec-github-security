@@ -1,0 +1,87 @@
+name: Burpsuite
+description: Run a Burpsuite scan
+author: Dan Norris
+inputs:
+  host:
+    description: The Burpsuite EE server
+    required: true
+    default: alawpburps301.risk.regn.net
+  port:
+    description: The port for the Burpsuite EE server
+    required: true
+    default: "8443"
+  site-id:
+    description: The scan id
+    required: true
+  api-key:
+    description: The API key for the service account
+    required: true
+  severity-threshold:
+    description: The min severity threshold needed before failing a scan
+    required: true
+    default: high
+  confidence-threshold:
+    description: The min confidence threshold needed before failing a scan
+    required: true
+    default: certain
+  timeout:
+    description: The max time in seconds to wait for a response from the scan
+    required: false
+    default: "60"
+  report-type:
+    description: The type of report to return, e.g. "detailed" or "summary"
+    required: false
+    default: summary
+
+runs:
+  using: composite
+  steps:
+    - name: Install Java 11
+      uses: actions/setup-java@v3
+      with:
+        distribution: 'microsoft'
+        java-version: '11'
+    - name: Get certs
+      run: |
+        openssl s_client -connect ${{ inputs.host }}:${{ inputs.port }} </dev/null \
+            | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' > ${{ inputs.host }}.cert
+      shell: bash
+    - name: Set environment variables
+      run: |
+        echo "KEYSTOREFILE=$JAVA_HOME/lib/security/cacerts" >> $GITHUB_ENV && \
+        echo "KEYSTOREPASS=changeit" >> $GITHUB_ENV
+      shell: bash
+    - name: Import certs
+      run: |
+        keytool -import -noprompt -trustcacerts \
+          -alias ${{ inputs.host }} -file ${{ inputs.host }}.cert \
+          -keystore ${KEYSTOREFILE} -storepass ${KEYSTOREPASS}
+      shell: bash
+    - name: Verify certs
+      run: |
+        keytool -list -v -keystore ${KEYSTOREFILE} -storepass ${KEYSTOREPASS} -alias ${{ inputs.host }}
+      shell: bash
+    - name: Download Burpsuite driver
+      run: |
+        wget \
+        -O ./ci-driver.jar \
+        https://portswigger-cdn.net/burp/releases/download?product=generic_ci_driver&version=2021.3&type=Jar
+      shell: bash
+    - name: Run Burpsuite scan
+      run: |
+        java -jar \
+        ./ci-driver.jar \
+        https://${{ inputs.host }}:${{ inputs.port }} \
+        --api-key=${{ inputs.api-key }} \
+        --site-id=${{ inputs.site-id }} \
+        --min-severity=${{ inputs.severity-threshold }} \
+        --min-confidence=${{ inputs.confidence-threshold }} \
+        --timeout=${{ inputs.timeout }} \
+        --report-file=scan-report.html \
+        --report-type=${{ inputs.report-type }}
+      shell: bash
+    - name: Save scan report as artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: Burpsuite Report
+        path: scan-report.html
