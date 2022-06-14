@@ -1,0 +1,52 @@
+name: Checkmarx
+description: Run a Checkmarx scan
+author: Frank Morgan
+inputs:
+  url:
+    description: Checkmarx server URL
+    default: https://alawpcxmgr201.risk.regn.net
+    required: false
+  username:
+    description: Username to use when authenticating with Checkmarx
+    required: true
+  password:
+    description: Password to use when authenticating with Checkmarx
+    required: true
+  client-secret:
+    description: Client secret to use when authenticating with Checkmarx
+    required: true
+  project:
+    description: Name of the project being scanned (as it appears in Checkmarx)
+    required: true
+  app:
+    description: Unique application identifier used by downstream bug trackers
+    default: ${GITHUB_REPOSITORY}-${GITHUB_REF_NAME}-${GITHUB_SHA}
+    required: false
+  team:
+    description: Team that owns the project being scanned
+    default: /CxServer/SP/Risk/BSUK
+    required: false
+  scanners:
+    description: Vulnerability scanners to enable (comma separated)
+    default: sast
+    required: false
+  break-build:
+    description: Break build on failure
+    default: "true"
+    required: false
+runs:
+  using: composite
+  steps:
+    - uses: actions/checkout@v2
+    - name: CxFlow
+      uses: checkmarx-ts/checkmarx-cxflow-github-action@v1.3
+      with:
+        checkmarx_url: ${{ inputs.url }}
+        checkmarx_username: ${{ inputs.username }}
+        checkmarx_password: ${{ inputs.password }}
+        checkmarx_client_secret: ${{ inputs.client-secret }}
+        team: ${{ inputs.team }}
+        project: ${{ inputs.project }}
+        app: ${{ inputs.app }}
+        scanners: ${{ inputs.scanners }}
+        break_build: ${{ inputs.break-build }}
