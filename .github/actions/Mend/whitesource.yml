@@ -1,0 +1,29 @@
+name: Whitesource
+description: Run a WhiteSource scan
+author: Dan Norris
+inputs:
+  command:
+    description: The command to run
+    type: string
+    default: java -jar wss-unified-agent.jar -c whitesource.config -apikey $WHITESOURCE_API_KEY -d . || EXITCODE=$?; cat whitesource/policyRejectionSummary.json 2>/dev/null; $(exit $EXITCODE)
+runs:
+  using: composite
+  steps:
+    - uses: actions/checkout@v3
+    - run: curl -LJO https://github.com/whitesource/unified-agent-distribution/releases/latest/download/wss-unified-agent.jar
+      shell: bash
+    - name: Check integrity of file
+      run: |
+        if [[ "$(curl -sL https://github.com/whitesource/unified-agent-distribution/releases/latest/download/wss-unified-agent.jar.sha256)" != "$(sha256sum wss-unified-agent.jar)" ]]; then
+          echo "Integrity Check Failed"
+        else
+          echo "Integrity Check Passed"
+          echo "Starting WhiteSource Scan"
+          ${{ inputs.command }}
+        fi
+      shell: bash
+    - name: Save WhiteSource report as artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: WhiteSource Report
+        path: whitesource/
