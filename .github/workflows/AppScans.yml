@@ -1,0 +1,76 @@
+name: Application Security Check
+
+on:
+  workflow_call:
+    inputs:
+      burpsuite:
+        description: Enable a Burpsuite scan
+        type: boolean
+        default: false
+        required: false
+      burpsuite-site-id:
+        description: The Burpsuite scan id to run
+        type: number
+        required: false
+      checkmarx:
+        description: Enable a Checkmarx scan
+        type: boolean
+        default: false
+        required: false
+      checkmarx-project:
+        description: The project to associate the Checkmarx scan
+        type: string
+        required: false
+      whitesource:
+        description: Enable a Whitesource scan
+        type: boolean
+        default: false
+        required: false
+    secrets:
+      burpsuite-api-key:
+        description: The key for the Burpsuite API service account
+        required: false
+      checkmarx-username: 
+        description: The Checkmarx username
+        required: false
+      checkmarx-password:
+        description: The Checkmarx password
+        required: false
+      checkmarx-client-secret:
+        description: The Checkmarx client secret
+        required: false
+      whitesource-api-key:
+        description: The key for the Whitesource service account
+        required: false
+
+jobs:
+  checkmarx:
+    if: inputs.checkmarx
+    name: SAST / Checkmarx
+    runs-on: [self-hosted, Linux, on-prem, shared]
+    steps:
+      - uses: LexisNexis-RBA/bsuk-github-security/.github/actions/checkmarx@nexus-1207-sast-and-dast
+        with:
+          username: ${{ secrets.checkmarx-username }}
+          password: ${{ secrets.checkmarx-password }}
+          client-secret: ${{ secrets.checkmarx-client-secret }}
+          project: ${{ inputs.checkmarx-project }}
+
+  burpsuite:
+    if: inputs.burpsuite
+    name: DAST / Burpsuite
+    runs-on: [self-hosted, Linux, on-prem, shared]
+    steps:
+      - uses: LexisNexis-RBA/bsuk-github-security/.github/actions/burpsuite@nexus-1207-sast-and-dast
+        with:
+          site-id: ${{ inputs.burpsuite-site-id }}
+          api-key: ${{ secrets.burpsuite-api-key }}
+
+  whitesource:
+    if: inputs.whitesource
+    name: SCA / Whitesource
+    runs-on: ubuntu-latest
+    env:
+      WHITESOURCE_API_KEY: ${{ secrets.whitesource-api-key }}
+    steps:
+      - uses: LexisNexis-RBA/bsuk-github-actions/.github/actions/whitesource@v1
