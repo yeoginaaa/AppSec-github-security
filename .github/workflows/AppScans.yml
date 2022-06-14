@@ -1,4 +1,4 @@
-name: Application Security Check
+name: Application Security Check Test1
 
 on:
   workflow_call:
