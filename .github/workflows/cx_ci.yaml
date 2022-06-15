@@ -1,11 +1,15 @@
-name: CI
+name: Chekcmarx SAST Scan
 
-on: workflow_dispatch
+on: #workflow_dispatch
+  push:
+    branches:
+      - main
+      - master
 
 jobs:
   cx-scan:
     name: Checkmarx Scan
-    runs-on: [ self-hosted, linux, on-prem, docker ]
+    runs-on: [ self-hosted, linux, on-prem, docker ] #self-hosted 
     continue-on-error: true
 
     steps:
