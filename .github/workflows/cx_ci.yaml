@@ -9,7 +9,7 @@ on: #workflow_dispatch
 jobs:
   cx-scan:
     name: Checkmarx Scan
-    runs-on: [ self-hosted, linux, on-prem, docker ] #self-hosted 
+    runs-on: [ self-hosted, linux, on-prem, shared ] #self-hosted 
     continue-on-error: true
 
     steps:
