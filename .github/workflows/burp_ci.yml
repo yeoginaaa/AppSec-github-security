@@ -3,11 +3,10 @@ name: Burpsuite Scan
 on:
   push:
 
-
 jobs:
   Burpsuite-scan:
     name: DAST / Burpsuite
-    runs-on: [self-hosted, Linux, on-prem, shared]
+    runs-on: [ self-hosted, Linux, X64 ]
    
     steps:
       - uses: LexisNexis-RBA/bsuk-github-security/.github/actions/burpsuite@nexus-1207-sast-and-dast
