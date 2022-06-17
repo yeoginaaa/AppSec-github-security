@@ -84,4 +84,4 @@ runs:
       uses: actions/upload-artifact@v3
       with:
         name: Burpsuite Report
-        path: scan-report.html
+        path: TESTscan-report.html
